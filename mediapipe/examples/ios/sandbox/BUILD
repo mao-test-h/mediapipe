@@ -1,0 +1,79 @@
+
+load(
+    "@build_bazel_rules_apple//apple:ios.bzl",
+    "ios_application",
+)
+
+licenses(["notice"])
+
+MIN_IOS_VERSION = "10.0"
+
+alias(
+    name = "sandbox",
+    actual = "SandboxApp",
+)
+
+filegroup(
+    name = "AppIcon",
+    srcs = glob(["Assets.xcassets/AppIcon.appiconset/*"]),
+    visibility = ["//mediapipe:__subpackages__"],
+)
+
+ios_application(
+    name = "SandboxApp",
+    app_icons = ["//mediapipe/examples/ios/common:AppIcon"],
+    bundle_id = "jp.mao-personal.wildcard.sandbox",
+    families = [
+        "iphone",
+        "ipad",
+    ],
+    infoplists = ["Info.plist"],
+    minimum_os_version = MIN_IOS_VERSION,
+    provisioning_profile = "//mediapipe:provisioning_profile.mobileprovision",
+    deps = [
+        ":SandboxAppLibrary",
+        "@ios_opencv//:OpencvFramework",
+    ],
+)
+
+objc_library(
+    name = "SandboxAppLibrary",
+    srcs = [
+        "AppDelegate.m",
+        "SceneDelegate.m",
+        "ViewController.mm",
+        "main.m",
+    ],
+    hdrs = [
+        "AppDelegate.h",
+        "SceneDelegate.h",
+        "ViewController.h",
+    ],
+    data = [
+        "Base.lproj/LaunchScreen.storyboard",
+        "Base.lproj/Main.storyboard",
+        "//mediapipe/graphs/hand_tracking:multi_hand_tracking_mobile_gpu_binary_graph",
+        "//mediapipe/models:hand_landmark.tflite",
+        "//mediapipe/models:handedness.txt",
+        "//mediapipe/models:palm_detection.tflite",
+        "//mediapipe/models:palm_detection_labelmap.txt",
+    ],
+    sdk_frameworks = [
+        "AVFoundation",
+        "CoreGraphics",
+        "CoreMedia",
+        "UIKit",
+    ],
+    deps = [
+        "//mediapipe/objc:mediapipe_framework_ios",
+        "//mediapipe/objc:mediapipe_input_sources_ios",
+        "//mediapipe/objc:mediapipe_layer_renderer",
+    ] + select({
+        "//mediapipe:ios_i386": [],
+        "//mediapipe:ios_x86_64": [],
+        "//conditions:default": [
+            "//mediapipe/graphs/hand_tracking:multi_hand_mobile_calculators",
+            "//mediapipe/framework/formats:landmark_cc_proto",
+        ],
+    }),
+)
