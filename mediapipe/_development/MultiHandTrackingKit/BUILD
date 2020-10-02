@@ -45,8 +45,6 @@ objc_library(
     ],
     deps = [
         "//mediapipe/objc:mediapipe_framework_ios",
-        "//mediapipe/objc:mediapipe_input_sources_ios",
-        "//mediapipe/objc:mediapipe_layer_renderer",
     ] + select({
         "//mediapipe:ios_i386": [],
         "//mediapipe:ios_x86_64": [],

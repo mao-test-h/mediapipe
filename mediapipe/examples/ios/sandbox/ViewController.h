@@ -3,7 +3,6 @@
 #import <UIKit/UIKit.h>
 
 @class MultiHandTracker;
-typedef struct Landmark Landmark;
 
 @protocol MultiHandTrackerDelegate <NSObject>
 
@@ -33,11 +32,11 @@ typedef struct Landmark Landmark;
 @end
 
 
-struct Landmark {
+typedef struct Landmark {
     float x;
     float y;
     float z;
-};
+} Landmark;
 
 
 /**

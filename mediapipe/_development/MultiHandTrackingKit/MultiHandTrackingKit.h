@@ -10,7 +10,6 @@ FOUNDATION_EXPORT const unsigned char MultiHandTrackingKitVersionString[];
 // In this header, you should import all the public headers of your framework using statements like #import <MultiHandTrackingKit/PublicHeader.h>
 
 @class MultiHandTracker;
-typedef struct Landmark Landmark;
 
 @protocol MultiHandTrackerDelegate <NSObject>
 
@@ -40,8 +39,8 @@ typedef struct Landmark Landmark;
 @end
 
 
-struct Landmark {
+typedef struct Landmark {
     float x;
     float y;
     float z;
-};
+} Landmark;
