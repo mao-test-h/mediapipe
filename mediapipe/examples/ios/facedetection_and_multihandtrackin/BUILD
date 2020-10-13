@@ -52,7 +52,7 @@ objc_library(
     data = [
         "Base.lproj/LaunchScreen.storyboard",
         "Base.lproj/Main.storyboard",
-        "//mediapipe/graphs/hand_tracking:multi_hand_tracking_mobile_gpu_binary_graph",
+        "//mediapipe/graphs/_development:multi_hand_tracking_mobile_gpu_binary_graph",
         "//mediapipe/models:hand_landmark.tflite",
         "//mediapipe/models:handedness.txt",
         "//mediapipe/models:palm_detection.tflite",
