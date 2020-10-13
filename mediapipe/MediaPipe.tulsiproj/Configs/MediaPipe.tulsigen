@@ -22,6 +22,7 @@
   ],
   "buildTargets" : [
     "//mediapipe/_development/MultiHandTrackingKit:MultiHandTrackingKit",
+    "//mediapipe/examples/ios/facedetection_and_multihandtrackin:FaceDetectionAndMultiHandTrackinApp",
     "//mediapipe/examples/ios/facedetectioncpu:FaceDetectionCpuApp",
     "//mediapipe/examples/ios/facedetectiongpu:FaceDetectionGpuApp",
     "//mediapipe/examples/ios/faceeffect:FaceEffectApp",
@@ -93,6 +94,8 @@
     "mediapipe/examples/ios",
     "mediapipe/examples/ios/common",
     "mediapipe/examples/ios/common/Base.lproj",
+    "mediapipe/examples/ios/facedetection_and_multihandtrackin",
+    "mediapipe/examples/ios/facedetection_and_multihandtrackin/Base.lproj",
     "mediapipe/examples/ios/facedetectioncpu",
     "mediapipe/examples/ios/facedetectiongpu",
     "mediapipe/examples/ios/faceeffect",

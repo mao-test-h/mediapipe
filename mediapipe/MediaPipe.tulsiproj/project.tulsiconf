@@ -11,6 +11,7 @@
     "mediapipe",
     "mediapipe/_development/MultiHandTrackingKit",
     "mediapipe/examples/ios",
+    "mediapipe/examples/ios/facedetection_and_multihandtrackin",
     "mediapipe/examples/ios/facedetectioncpu",
     "mediapipe/examples/ios/facedetectiongpu",
     "mediapipe/examples/ios/faceeffect",
