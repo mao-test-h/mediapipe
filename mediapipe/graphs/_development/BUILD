@@ -35,6 +35,7 @@ cc_library(
         "//mediapipe/calculators/util:collection_has_min_size_calculator",
         "//mediapipe/graphs/hand_tracking/subgraphs:multi_hand_detection_gpu",
         "//mediapipe/graphs/hand_tracking/subgraphs:multi_hand_landmark_gpu",
+        "//mediapipe/graphs/_development/subgraphs:face_detection_mobile_gpu",
         "//mediapipe/graphs/_development/subgraphs:multi_hand_renderer_gpu",
     ],
 )
@@ -45,4 +46,3 @@ mediapipe_binary_graph(
     output_name = "multi_hand_tracking_mobile_gpu.binarypb",
     deps = [":multi_hand_mobile_calculators"],
 )
-

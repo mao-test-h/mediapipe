@@ -57,6 +57,8 @@ objc_library(
         "//mediapipe/models:handedness.txt",
         "//mediapipe/models:palm_detection.tflite",
         "//mediapipe/models:palm_detection_labelmap.txt",
+        "//mediapipe/models:face_detection_front.tflite",
+        "//mediapipe/models:face_detection_front_labelmap.txt",
     ],
     sdk_frameworks = [
         "AVFoundation",
@@ -72,7 +74,8 @@ objc_library(
         "//mediapipe:ios_i386": [],
         "//mediapipe:ios_x86_64": [],
         "//conditions:default": [
-            "//mediapipe/graphs/hand_tracking:multi_hand_mobile_calculators",
+            "//mediapipe/graphs/_development:multi_hand_mobile_calculators",
+            "//mediapipe/framework/formats:detection_cc_proto",
             "//mediapipe/framework/formats:landmark_cc_proto",
         ],
     }),
