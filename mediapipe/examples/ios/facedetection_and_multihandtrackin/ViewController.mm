@@ -5,6 +5,7 @@
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/formats/detection.pb.h"
 #include "mediapipe/framework/formats/rect.pb.h"
+#include "mediapipe/framework/formats/classification.pb.h"
 
 static const char* kVideoQueueLabel = "com.google.mediapipe.example.videoQueue";
 
@@ -15,6 +16,7 @@ static const char* kOutputStream = "output_video";
 static const char* kLandmarksOutputStream = "multi_hand_landmarks";
 static const char* kFaceOutputStream = "face_detections";
 static const char* kHandRectsOutputStream = "multi_hand_rects";
+static const char* kMultiHandednessesOutputStream = "multi_handednesses";
 
 // "front" or "back"
 static NSString* const kCameraPosition = @"front";
@@ -92,6 +94,7 @@ static NSString* const kCameraPosition = @"front";
     [newGraph addFrameOutputStream:kLandmarksOutputStream outputPacketType:MPPPacketTypeRaw];
     [newGraph addFrameOutputStream:kFaceOutputStream outputPacketType:MPPPacketTypeRaw];
     [newGraph addFrameOutputStream:kHandRectsOutputStream outputPacketType:MPPPacketTypeRaw];
+    [newGraph addFrameOutputStream:kMultiHandednessesOutputStream outputPacketType:MPPPacketTypeRaw];
     return newGraph;
 }
 
@@ -167,16 +170,34 @@ static NSString* const kCameraPosition = @"front";
     
         // multi-hands rects
         if (packet.IsEmpty()) {
-            NSLog(@"[TS:%lld] No face landmarks", packet.Timestamp().Value());
+            NSLog(@"[TS:%lld] No hands rect", packet.Timestamp().Value());
             return;
         }
 
         const auto &multiHandRects = packet.Get<std::vector<::mediapipe::NormalizedRect>>();
-        NSLog(@"[TS:%lld] Number of Rect instances: %lu", packet.Timestamp().Value(), multiHandRects.size());
+        //NSLog(@"[TS:%lld] Number of Rect instances: %lu", packet.Timestamp().Value(), multiHandRects.size());
         
         for (int hand_index = 0; hand_index < multiHandRects.size(); ++hand_index) {
             const auto &rect = multiHandRects[hand_index];
             NSLog(@"\tHand rect[%d]: (%f, %f, %f, %f)", hand_index, rect.x_center(), rect.y_center(), rect.width(), rect.height());
+        }
+    } else if (streamName == kMultiHandednessesOutputStream) {
+    
+        // multi-hands handedness
+        if (packet.IsEmpty()) {
+            NSLog(@"[TS:%lld] No hands handedness", packet.Timestamp().Value());
+            return;
+        }
+        
+        const auto &multiHandClassifications = packet.Get<std::vector<::mediapipe::ClassificationList>>();
+        //NSLog(@"[TS:%lld] Number of Classification instances: %lu", packet.Timestamp().Value(), multiHandClassifications.size());
+        
+        for (int hand_index = 0; hand_index < multiHandClassifications.size(); ++hand_index) {
+            const auto &classifications = multiHandClassifications[hand_index];
+            //NSLog(@"\tNumber of classification[%d]: %d", hand_index, classifications.classification_size());
+            for (int i = 0; i < classifications.classification_size(); ++i) {
+                NSLog(@"\t\tclassification[%d]: (%d, %f, %s)", i, classifications.classification(i).index(), classifications.classification(i).score(), classifications.classification(i).label().c_str());
+            }
         }
     }
 }

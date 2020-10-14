@@ -78,6 +78,7 @@ objc_library(
             "//mediapipe/framework/formats:detection_cc_proto",
             "//mediapipe/framework/formats:landmark_cc_proto",
             "//mediapipe/framework/formats:rect_cc_proto",
+            "//mediapipe/framework/formats:classification_cc_proto",
         ],
     }),
 )
