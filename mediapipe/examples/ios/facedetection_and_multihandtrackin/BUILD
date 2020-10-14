@@ -77,6 +77,7 @@ objc_library(
             "//mediapipe/graphs/_development:multi_hand_mobile_calculators",
             "//mediapipe/framework/formats:detection_cc_proto",
             "//mediapipe/framework/formats:landmark_cc_proto",
+            "//mediapipe/framework/formats:rect_cc_proto",
         ],
     }),
 )

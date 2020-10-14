@@ -4,14 +4,17 @@
 #import "mediapipe/objc/MPPLayerRenderer.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/formats/detection.pb.h"
+#include "mediapipe/framework/formats/rect.pb.h"
 
 static const char* kVideoQueueLabel = "com.google.mediapipe.example.videoQueue";
 
 static NSString* const kGraphName = @"multi_hand_tracking_mobile_gpu";
 static const char* kInputStream = "input_video";
 static const char* kOutputStream = "output_video";
+
 static const char* kLandmarksOutputStream = "multi_hand_landmarks";
 static const char* kFaceOutputStream = "face_detections";
+static const char* kHandRectsOutputStream = "multi_hand_rects";
 
 // "front" or "back"
 static NSString* const kCameraPosition = @"front";
@@ -88,6 +91,7 @@ static NSString* const kCameraPosition = @"front";
     [newGraph addFrameOutputStream:kOutputStream outputPacketType:MPPPacketTypePixelBuffer];
     [newGraph addFrameOutputStream:kLandmarksOutputStream outputPacketType:MPPPacketTypeRaw];
     [newGraph addFrameOutputStream:kFaceOutputStream outputPacketType:MPPPacketTypeRaw];
+    [newGraph addFrameOutputStream:kHandRectsOutputStream outputPacketType:MPPPacketTypeRaw];
     return newGraph;
 }
 
@@ -146,18 +150,33 @@ static NSString* const kCameraPosition = @"front";
         }
 
         const auto &multi_fac_dect = packet.Get<std::vector<::mediapipe::Detection>>();
-        NSLog(@"[TS:%lld] Number of face instances with rects: %lu", packet.Timestamp().Value(), multi_fac_dect.size());
+        //NSLog(@"[TS:%lld] Number of face instances with rects: %lu", packet.Timestamp().Value(), multi_fac_dect.size());
 
         for (int face_index = 0; face_index < multi_fac_dect.size(); ++face_index) {
 
             const auto &location_data = multi_fac_dect[face_index].location_data();
             const auto &keypoints = location_data.relative_keypoints();
-            NSLog(@"\tNumber of landmarks for face[%d]: %d", face_index, keypoints.size());
+            //NSLog(@"\tNumber of landmarks for face[%d]: %d", face_index, keypoints.size());
 
             for (int i = 0; i < keypoints.size(); ++i) {
                 const auto &keypoint = keypoints[i];
-                NSLog(@"\t\tFace Landmark[%d]: (%f, %f)", i, keypoint.x(), keypoint.y());
+                //NSLog(@"\t\tFace Landmark[%d]: (%f, %f)", i, keypoint.x(), keypoint.y());
             }
+        }
+    } else if (streamName == kHandRectsOutputStream) {
+    
+        // multi-hands rects
+        if (packet.IsEmpty()) {
+            NSLog(@"[TS:%lld] No face landmarks", packet.Timestamp().Value());
+            return;
+        }
+
+        const auto &multiHandRects = packet.Get<std::vector<::mediapipe::NormalizedRect>>();
+        NSLog(@"[TS:%lld] Number of Rect instances: %lu", packet.Timestamp().Value(), multiHandRects.size());
+        
+        for (int hand_index = 0; hand_index < multiHandRects.size(); ++hand_index) {
+            const auto &rect = multiHandRects[hand_index];
+            NSLog(@"\tHand rect[%d]: (%f, %f, %f, %f)", hand_index, rect.x_center(), rect.y_center(), rect.width(), rect.height());
         }
     }
 }
