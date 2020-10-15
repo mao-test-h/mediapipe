@@ -114,18 +114,42 @@ node {
 }
 
 node {
-  calculator: "FaceDetectionSubgraph"
+  calculator: "IrisTrackingSubgraph"
   input_stream: "IMAGE:throttled_input_video"
+  output_stream: "IRIS_LANDMARKS:face_landmarks_with_iris"
+  output_stream: "FACE_LANDMARKS:updated_face_landmarks"
+  output_stream: "EYE_LANDMARKS_LEFT:left_eye_contour_landmarks"
+  output_stream: "EYE_LANDMARKS_RIGHT:right_eye_contour_landmarks"
+  output_stream: "IRIS_LANDMARKS_LEFT:left_iris_landmarks"
+  output_stream: "IRIS_LANDMARKS_RIGHT:right_iris_landmarks"
+  output_stream: "NORM_RECT:face_rect"
+  output_stream: "LEFT_EYE_RECT:left_eye_rect_from_landmarks"
+  output_stream: "RIGHT_EYE_RECT:right_eye_rect_from_landmarks"
   output_stream: "DETECTIONS:face_detections"
+}
+
+# Renders annotations and overlays them on top of the input images.
+node {
+  calculator: "IrisAndDepthRendererGpu"
+  input_stream: "IMAGE:throttled_input_video"
+  input_stream: "FACE_LANDMARKS:updated_face_landmarks"
+  input_stream: "EYE_LANDMARKS_LEFT:left_eye_contour_landmarks"
+  input_stream: "EYE_LANDMARKS_RIGHT:right_eye_contour_landmarks"
+  input_stream: "IRIS_LANDMARKS_LEFT:left_iris_landmarks"
+  input_stream: "IRIS_LANDMARKS_RIGHT:right_iris_landmarks"
+  input_stream: "NORM_RECT:face_rect"
+  input_stream: "LEFT_EYE_RECT:left_eye_rect_from_landmarks"
+  input_stream: "RIGHT_EYE_RECT:right_eye_rect_from_landmarks"
+  input_stream: "DETECTIONS:face_detections"
+  output_stream: "IMAGE:iris_output_video"
 }
 
 # Subgraph that renders annotations and overlays them on top of the input
 # images (see multi_hand_renderer_gpu.pbtxt).
 node {
   calculator: "MultiHandRendererSubgraph"
-  input_stream: "IMAGE:throttled_input_video"
+  input_stream: "IMAGE:iris_output_video"
   input_stream: "DETECTIONS:0:multi_palm_detections"
-  input_stream: "DETECTIONS:1:face_detections"
   input_stream: "LANDMARKS:multi_hand_landmarks"
   input_stream: "NORM_RECTS:0:multi_palm_rects"
   input_stream: "NORM_RECTS:1:multi_hand_rects"

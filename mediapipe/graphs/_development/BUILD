@@ -35,8 +35,8 @@ cc_library(
         "//mediapipe/calculators/util:collection_has_min_size_calculator",
         "//mediapipe/graphs/hand_tracking/subgraphs:multi_hand_detection_gpu",
         "//mediapipe/graphs/hand_tracking/subgraphs:multi_hand_landmark_gpu",
-        "//mediapipe/graphs/_development/subgraphs:face_detection_mobile_gpu",
         "//mediapipe/graphs/_development/subgraphs:multi_hand_renderer_gpu",
+        "//mediapipe/graphs/_development/subgraphs:iris_tracking_gpu_binary_graph",
     ],
 )
 
