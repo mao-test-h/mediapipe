@@ -1,3 +1,5 @@
+# MediaPipe iris tracking subgraph.
+
 type: "IrisTrackingSubgraph"
 
 # GPU buffer. (GpuBuffer)

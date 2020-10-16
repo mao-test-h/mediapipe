@@ -1,12 +1,14 @@
-# MediaPipe graph that performs multi-hand tracking with TensorFlow Lite on GPU.
-# Used in the examples in
-# mediapipe/examples/android/src/java/com/mediapipe/apps/multihandtrackinggpu.
+# MediaPipe graph that performs iris tracking & multi-hand tracking with TensorFlow Lite on GPU.
 
 # Images coming into and out of the graph.
 input_stream: "input_video"
 output_stream: "output_video"
 
+# Mmulti hand handedness with multi-hand tracking.(ClassificationList)
 output_stream: "HANDEDNESSES:multi_handednesses"
+
+# Face landmarks with iris. (NormalizedLandmarkList)
+output_stream: "face_landmarks_with_iris"
 
 # Throttles the images flowing downstream for flow control. It passes through
 # the very first incoming image unaltered, and waits for downstream nodes
@@ -113,6 +115,7 @@ node {
   }
 }
 
+# MediaPipe iris tracking subgraph.
 node {
   calculator: "IrisTrackingSubgraph"
   input_stream: "IMAGE:throttled_input_video"
@@ -128,7 +131,8 @@ node {
   output_stream: "DETECTIONS:face_detections"
 }
 
-# Renders annotations and overlays them on top of the input images.
+# Subgraph that renders annotations and overlays them on top of the input
+# images (see "//mediapipe/graphs/_development/subgraphs/iris_and_depth_renderer_gpu.pbtxt")
 node {
   calculator: "IrisAndDepthRendererGpu"
   input_stream: "IMAGE:throttled_input_video"
@@ -145,7 +149,7 @@ node {
 }
 
 # Subgraph that renders annotations and overlays them on top of the input
-# images (see multi_hand_renderer_gpu.pbtxt).
+# images (see "//mediapipe/graphs/_development/subgraphs/multi_hand_renderer_gpu.pbtxt")
 node {
   calculator: "MultiHandRendererSubgraph"
   input_stream: "IMAGE:iris_output_video"

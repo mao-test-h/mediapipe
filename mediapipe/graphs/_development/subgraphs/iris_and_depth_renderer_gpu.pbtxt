@@ -1,3 +1,5 @@
+# MediaPipe iris tracking rendering subgraph.
+
 type: "IrisAndDepthRendererGpu"
 
 input_stream: "IMAGE:input_image"
@@ -10,9 +12,12 @@ input_stream: "IRIS_LANDMARKS_RIGHT:right_iris_landmarks"
 input_stream: "NORM_RECT:rect"
 input_stream: "LEFT_EYE_RECT:left_eye_rect_from_landmarks"
 input_stream: "RIGHT_EYE_RECT:right_eye_rect_from_landmarks"
+
 input_side_packet: "FOCAL_LENGTH:focal_length_pixel"
+
 output_stream: "IRIS_LANDMARKS:iris_landmarks"
 output_stream: "IMAGE:output_image"
+
 
 node {
   calculator: "SplitNormalizedLandmarkListCalculator"
