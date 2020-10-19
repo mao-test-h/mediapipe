@@ -10,12 +10,26 @@
 static const char* kVideoQueueLabel = "com.google.mediapipe.example.videoQueue";
 
 static NSString* const kGraphName = @"multi_hand_tracking_mobile_gpu";
+
+// Images coming into and out of the graph.
 static const char* kInputStream = "input_video";
 static const char* kOutputStream = "output_video";
 
-static const char* kLandmarksOutputStream = "multi_hand_landmarks";
-static const char* kFaceOutputStream = "face_detections";
-static const char* kHandRectsOutputStream = "multi_hand_rects";
+// Face
+static const char* kFaceDetectOutputStream = "face_detections";
+static const char* kFaceRectOutputStream = "face_rect";
+static const char* kFaceLandmarksOutputStream = "face_landmarks_with_iris";
+
+// Left Eye
+static const char* kLeftEyeContourLandmarksOutputStream = "left_eye_contour_landmarks";
+static const char* kLeftIrisLandmarksOutputStream = "left_iris_landmarks";
+// Right Eye
+static const char* kRightEyeContourLandmarksOutputStream = "right_eye_contour_landmarks";
+static const char* kRightIrisLandmarksOutputStream = "right_iris_landmarks";
+
+// Multi-Hands
+static const char* kMultiHand3dLandmarksOutputStream = "multi_hand_landmarks";
+static const char* kMultiHandRectsOutputStream = "multi_hand_rects";
 static const char* kMultiHandednessesOutputStream = "multi_handednesses";
 
 // "front" or "back"
@@ -91,10 +105,21 @@ static NSString* const kCameraPosition = @"front";
     // Create MediaPipe graph with mediapipe::CalculatorGraphConfig proto object.
     MPPGraph* newGraph = [[MPPGraph alloc] initWithGraphConfig:config];
     [newGraph addFrameOutputStream:kOutputStream outputPacketType:MPPPacketTypePixelBuffer];
-    [newGraph addFrameOutputStream:kLandmarksOutputStream outputPacketType:MPPPacketTypeRaw];
-    [newGraph addFrameOutputStream:kFaceOutputStream outputPacketType:MPPPacketTypeRaw];
-    [newGraph addFrameOutputStream:kHandRectsOutputStream outputPacketType:MPPPacketTypeRaw];
+
+    [newGraph addFrameOutputStream:kFaceDetectOutputStream outputPacketType:MPPPacketTypeRaw];
+    [newGraph addFrameOutputStream:kFaceRectOutputStream outputPacketType:MPPPacketTypeRaw];
+    [newGraph addFrameOutputStream:kFaceLandmarksOutputStream outputPacketType:MPPPacketTypeRaw];
+
+    [newGraph addFrameOutputStream:kLeftEyeContourLandmarksOutputStream outputPacketType:MPPPacketTypeRaw];
+    [newGraph addFrameOutputStream:kLeftIrisLandmarksOutputStream outputPacketType:MPPPacketTypeRaw];
+
+    [newGraph addFrameOutputStream:kRightEyeContourLandmarksOutputStream outputPacketType:MPPPacketTypeRaw];
+    [newGraph addFrameOutputStream:kRightIrisLandmarksOutputStream outputPacketType:MPPPacketTypeRaw];
+
+    [newGraph addFrameOutputStream:kMultiHand3dLandmarksOutputStream outputPacketType:MPPPacketTypeRaw];
+    [newGraph addFrameOutputStream:kMultiHandRectsOutputStream outputPacketType:MPPPacketTypeRaw];
     [newGraph addFrameOutputStream:kMultiHandednessesOutputStream outputPacketType:MPPPacketTypeRaw];
+
     return newGraph;
 }
 
@@ -104,6 +129,7 @@ static NSString* const kCameraPosition = @"front";
 - (void)mediapipeGraph:(MPPGraph*)graph
   didOutputPixelBuffer:(CVPixelBufferRef)pixelBuffer
             fromStream:(const std::string &)streamName {
+
     if (streamName != kOutputStream) {return;}
     [_delegate multiHandTracker:self didOutputPixelBuffer:pixelBuffer];
 }
@@ -113,91 +139,202 @@ static NSString* const kCameraPosition = @"front";
        didOutputPacket:(const ::mediapipe::Packet &)packet
             fromStream:(const std::string &)streamName {
 
-    if (streamName == kLandmarksOutputStream) {
+    if (packet.IsEmpty()) {
+        NSLog(@"[TS:%lld] No Packet", packet.Timestamp().Value());
+        return;
+    }
 
-        // multi-hands landmarks poins
-        if (packet.IsEmpty()) {
-            NSLog(@"[TS:%lld] No hand landmarks", packet.Timestamp().Value());
-            return;
-        }
+    [self printGraph:graph didOutputPacket:packet fromStream:streamName];
+}
 
-        const int kLandmarkCount = 21;
-        NSMutableArray* resultLandmarks = [NSMutableArray array];
-        const auto &multiHandLandmarks = packet.Get<std::vector<::mediapipe::NormalizedLandmarkList>>();
-        for (int hand_index = 0; hand_index < multiHandLandmarks.size(); ++hand_index) {
-            const auto &landmarks = multiHandLandmarks[hand_index];
-            for (int i = 0; i < landmarks.landmark_size(); ++i) {
-                Landmark landmark;
-                landmark.x = landmarks.landmark(i).x();
-                landmark.y = landmarks.landmark(i).y();
-                landmark.z = landmarks.landmark(i).z();
-                [resultLandmarks addObject:[NSValue value:&landmark withObjCType:@encode(Landmark)]];
-            }
+#pragma mark - mediapipeGraph print methods
 
-            if (kLandmarkCount != landmarks.landmark_size()) {
-                NSLog(@"Different landmark count for A:[%d], B:[%d]", landmarks.landmark_size(), kLandmarkCount);
-            }
-        }
+- (void)printGraph:(MPPGraph*)graph
+   didOutputPacket:(const ::mediapipe::Packet &)packet
+        fromStream:(const std::string &)streamName {
 
-        [_delegate multiHandTracker:self
-                 didOutputLandmarks:resultLandmarks
-                      withHandCount:(int) multiHandLandmarks.size()
-                  withLandmarkCount:kLandmarkCount];
+    // Face
+    if (streamName == kFaceDetectOutputStream) {
+        [self printFaceDetect:graph didOutputPacket:packet fromStream:streamName];
+    } else if (streamName == kFaceRectOutputStream) {
+        [self printFaceRect:graph didOutputPacket:packet fromStream:streamName];
+    } else if (streamName == kFaceLandmarksOutputStream) {
+        [self printFaceLandmarks:graph didOutputPacket:packet fromStream:streamName];
 
-    } else if (streamName == kFaceOutputStream) {
+        // Left Eye
+    } else if (streamName == kLeftEyeContourLandmarksOutputStream) {
+        [self printEyeContourLandmarksOutputStream:graph didOutputPacket:packet fromStream:streamName];
+    } else if (streamName == kLeftIrisLandmarksOutputStream) {
+        [self printIrisLandmarks:graph didOutputPacket:packet fromStream:streamName];
 
-        //face landmarks poins
-        if (packet.IsEmpty()) {
-            NSLog(@"[TS:%lld] No face landmarks", packet.Timestamp().Value());
-            return;
-        }
+        // Right Eye
+    } else if (streamName == kRightEyeContourLandmarksOutputStream) {
+        [self printEyeContourLandmarksOutputStream:graph didOutputPacket:packet fromStream:streamName];
+    } else if (streamName == kRightIrisLandmarksOutputStream) {
+        [self printIrisLandmarks:graph didOutputPacket:packet fromStream:streamName];
 
-        const auto &multi_fac_dect = packet.Get<std::vector<::mediapipe::Detection>>();
-        //NSLog(@"[TS:%lld] Number of face instances with rects: %lu", packet.Timestamp().Value(), multi_fac_dect.size());
-
-        for (int face_index = 0; face_index < multi_fac_dect.size(); ++face_index) {
-
-            const auto &location_data = multi_fac_dect[face_index].location_data();
-            const auto &keypoints = location_data.relative_keypoints();
-            //NSLog(@"\tNumber of landmarks for face[%d]: %d", face_index, keypoints.size());
-
-            for (int i = 0; i < keypoints.size(); ++i) {
-                const auto &keypoint = keypoints[i];
-                //NSLog(@"\t\tFace Landmark[%d]: (%f, %f)", i, keypoint.x(), keypoint.y());
-            }
-        }
-    } else if (streamName == kHandRectsOutputStream) {
-    
-        // multi-hands rects
-        if (packet.IsEmpty()) {
-            NSLog(@"[TS:%lld] No hands rect", packet.Timestamp().Value());
-            return;
-        }
-
-        const auto &multiHandRects = packet.Get<std::vector<::mediapipe::NormalizedRect>>();
-        //NSLog(@"[TS:%lld] Number of Rect instances: %lu", packet.Timestamp().Value(), multiHandRects.size());
-        
-        for (int hand_index = 0; hand_index < multiHandRects.size(); ++hand_index) {
-            const auto &rect = multiHandRects[hand_index];
-            NSLog(@"\tHand rect[%d]: (%f, %f, %f, %f)", hand_index, rect.x_center(), rect.y_center(), rect.width(), rect.height());
-        }
+        // Multi-Hands
+    } else if (streamName == kMultiHand3dLandmarksOutputStream) {
+        [self printMultiHand3dLandmarks:graph didOutputPacket:packet fromStream:streamName];
+    } else if (streamName == kMultiHandRectsOutputStream) {
+        [self printMultiHandRects:graph didOutputPacket:packet fromStream:streamName];
     } else if (streamName == kMultiHandednessesOutputStream) {
-    
-        // multi-hands handedness
-        if (packet.IsEmpty()) {
-            NSLog(@"[TS:%lld] No hands handedness", packet.Timestamp().Value());
-            return;
+        [self printMultiHandednesses:graph didOutputPacket:packet fromStream:streamName];
+    }
+}
+
+- (void)printFaceDetect:(MPPGraph*)graph
+        didOutputPacket:(const ::mediapipe::Packet &)packet
+             fromStream:(const std::string &)streamName {
+
+    const auto &detects = packet.Get<std::vector<::mediapipe::Detection>>();
+    NSLog(@"[FaceDetect][TS:%lld] Number of face instances with detections: %lu", packet.Timestamp().Value(), detects.size());
+
+    for (int faceIndex = 0; faceIndex < detects.size(); ++faceIndex) {
+        const auto &locationData = detects[faceIndex].location_data();
+        const auto &format = locationData.format();
+        const auto &boundingBox = locationData.bounding_box();
+        const auto &relativeBoundingBox = locationData.relative_bounding_box();
+        const auto &keypointSize = locationData.relative_keypoints_size();
+
+        NSLog(@"\t[FaceDetect][Index] %d", faceIndex);
+        NSLog(@"\t[FaceDetect][Format] %d", format);
+        NSLog(@"\t[FaceDetect][BoundingBox] (%f, %f, %f, %f)", boundingBox.xmin(), boundingBox.ymin(), boundingBox.width(), boundingBox.height());
+        NSLog(@"\t[FaceDetect][RelativeBoundingBox] (%f, %f, %f, %f)", relativeBoundingBox.xmin(), relativeBoundingBox.ymin(), relativeBoundingBox.width(), relativeBoundingBox.height());
+        NSLog(@"\t[FaceDetect][KeypointSize] %d", keypointSize);
+
+        for (int i = 0; i < keypointSize; ++i) {
+            const auto &keypoint = locationData.relative_keypoints(i);
+            NSLog(@"\t\t[FaceDetect][Keypoint] (%f, %f, %s, %f)", keypoint.x(), keypoint.y(), keypoint.keypoint_label().c_str(), keypoint.score());
         }
-        
-        const auto &multiHandClassifications = packet.Get<std::vector<::mediapipe::ClassificationList>>();
-        //NSLog(@"[TS:%lld] Number of Classification instances: %lu", packet.Timestamp().Value(), multiHandClassifications.size());
-        
-        for (int hand_index = 0; hand_index < multiHandClassifications.size(); ++hand_index) {
-            const auto &classifications = multiHandClassifications[hand_index];
-            //NSLog(@"\tNumber of classification[%d]: %d", hand_index, classifications.classification_size());
-            for (int i = 0; i < classifications.classification_size(); ++i) {
-                NSLog(@"\t\tclassification[%d]: (%d, %f, %s)", i, classifications.classification(i).index(), classifications.classification(i).score(), classifications.classification(i).label().c_str());
-            }
+    }
+}
+
+- (void)printFaceRect:(MPPGraph*)graph
+      didOutputPacket:(const ::mediapipe::Packet &)packet
+           fromStream:(const std::string &)streamName {
+
+    const auto &rect = packet.Get<mediapipe::NormalizedRect>();
+    NSLog(@"[FaceRect][TS:%lld]", packet.Timestamp().Value());
+    NSLog(@"\t[FaceRect][RelativeBoundingBox] (%f, %f, %f, %f)", rect.x_center(), rect.y_center(), rect.width(), rect.height());
+}
+
+- (void)printFaceLandmarks:(MPPGraph*)graph
+           didOutputPacket:(const ::mediapipe::Packet &)packet
+                fromStream:(const std::string &)streamName {
+
+    const auto &landmarks = packet.Get<::mediapipe::NormalizedLandmarkList>();
+    NSLog(@"[FaceLandmark][TS:%lld]", packet.Timestamp().Value());
+    NSLog(@"\t[FaceLandmark][LandmarkSize] %d", landmarks.landmark_size());
+
+    for (int index = 0; index < landmarks.landmark_size(); ++index) {
+        const auto &landmark = landmarks.landmark(index);
+        NSLog(@"\t\t[FaceLandmark] [%d](%f, %f, %f)", index, landmark.x(), landmark.y(), landmark.z());
+    }
+}
+
+- (void)printEyeContourLandmarksOutputStream:(MPPGraph*)graph
+                             didOutputPacket:(const ::mediapipe::Packet &)packet
+                                  fromStream:(const std::string &)streamName {
+
+    NSString* stream = (streamName == kLeftEyeContourLandmarksOutputStream) ? @"Left" : @"Right";
+    const auto &landmarks = packet.Get<::mediapipe::NormalizedLandmarkList>();
+
+    NSLog(@"[%@EyeContourLamdmark][TS:%lld]", stream, packet.Timestamp().Value());
+    NSLog(@"\t[%@EyeContourLamdmark][LandmarkSize] %d", stream, landmarks.landmark_size());
+
+    for (int index = 0; index < landmarks.landmark_size(); ++index) {
+        const auto &landmark = landmarks.landmark(index);
+        NSLog(@"\t\t[%@EyeContourLamdmark] [%d](%f, %f, %f)", stream, index, landmark.x(), landmark.y(), landmark.z());
+    }
+}
+
+- (void)printIrisLandmarks:(MPPGraph*)graph
+           didOutputPacket:(const ::mediapipe::Packet &)packet
+                fromStream:(const std::string &)streamName {
+
+    NSString* stream = (streamName == kLeftEyeContourLandmarksOutputStream) ? @"Left" : @"Right";
+    const auto &landmarks = packet.Get<::mediapipe::NormalizedLandmarkList>();
+
+    NSLog(@"[%@IrisLamdmark][TS:%lld]", stream, packet.Timestamp().Value());
+    NSLog(@"\t[%@IrisLamdmark][LandmarkSize] %d", stream, landmarks.landmark_size());
+
+    for (int index = 0; index < landmarks.landmark_size(); ++index) {
+        const auto &landmark = landmarks.landmark(index);
+        NSLog(@"\t\t[%@IrisLamdmark] [%d](%f, %f, %f)", stream, index, landmark.x(), landmark.y(), landmark.z());
+    }
+}
+
+- (void)printMultiHand3dLandmarks:(MPPGraph*)graph
+                  didOutputPacket:(const ::mediapipe::Packet &)packet
+                       fromStream:(const std::string &)streamName {
+
+    NSMutableArray* resultLandmarks = [NSMutableArray array];
+    const auto &multiHandLandmarks = packet.Get<std::vector<::mediapipe::NormalizedLandmarkList>>();
+    NSLog(@"[MultiHand3dLandmarks][TS:%lld] Number of hand instances with landmarks: %lu", packet.Timestamp().Value(), multiHandLandmarks.size());
+
+    for (int handIndex = 0; handIndex < multiHandLandmarks.size(); ++handIndex) {
+        const auto &hand = multiHandLandmarks[handIndex];
+        const auto &landmarkSize = hand.landmark_size();
+
+        NSLog(@"\t[MultiHand3dLandmarks][Index] %d", handIndex);
+        NSLog(@"\t[MultiHand3dLandmarks][LandmarkSize] %d", landmarkSize);
+
+        for (int i = 0; i < landmarkSize; ++i) {
+            Landmark landmark;
+            landmark.x = hand.landmark(i).x();
+            landmark.y = hand.landmark(i).y();
+            landmark.z = hand.landmark(i).z();
+            [resultLandmarks addObject:[NSValue value:&landmark withObjCType:@encode(Landmark)]];
+
+            const auto &landmark_ = hand.landmark(i);
+            NSLog(@"\t\t[MultiHand3dLandmarks][Point] (%f, %f, %f)", landmark_.x(), landmark_.y(), landmark_.z());
+            NSLog(@"\t\t[MultiHand3dLandmarks][Visibility] %f", landmark_.visibility());
+            NSLog(@"\t\t[MultiHand3dLandmarks][Presence] %f", landmark_.presence());
+        }
+    }
+
+    const int kLandmarkCount = 21;
+    [_delegate multiHandTracker:self
+             didOutputLandmarks:resultLandmarks
+                  withHandCount:(int) multiHandLandmarks.size()
+              withLandmarkCount:kLandmarkCount];
+}
+
+- (void)printMultiHandRects:(MPPGraph*)graph
+            didOutputPacket:(const ::mediapipe::Packet &)packet
+                 fromStream:(const std::string &)streamName {
+
+    const auto &multiHandRects = packet.Get<std::vector<::mediapipe::NormalizedRect>>();
+    NSLog(@"[MultiHandRects][TS:%lld] Number of hand instances with rects: %lu", packet.Timestamp().Value(), multiHandRects.size());
+
+    for (int handIndex = 0; handIndex < multiHandRects.size(); ++handIndex) {
+        const auto &rect = multiHandRects[handIndex];
+        NSLog(@"\t[MultiHandRects][Index] %d", handIndex);
+        NSLog(@"\t[MultiHandRects][Rect] (%f, %f, %f, %f)", rect.x_center(), rect.y_center(), rect.width(), rect.height());
+    }
+}
+
+- (void)printMultiHandednesses:(MPPGraph*)graph
+               didOutputPacket:(const ::mediapipe::Packet &)packet
+                    fromStream:(const std::string &)streamName {
+
+    const auto &multiHandClassifications = packet.Get<std::vector<::mediapipe::ClassificationList>>();
+    NSLog(@"[MultiHandednesses][TS:%lld] Number of hand instances with Handedness: %lu", packet.Timestamp().Value(), multiHandClassifications.size());
+
+    for (int handIndex = 0; handIndex < multiHandClassifications.size(); ++handIndex) {
+        const auto &classifications = multiHandClassifications[handIndex];
+        const auto &size = classifications.classification_size();
+
+        NSLog(@"\t[MultiHandednesses][Index] %d", handIndex);
+        NSLog(@"\t[MultiHandednesses][Size] %d", size);
+
+        for (int i = 0; i < size; ++i) {
+            const auto &classification = classifications.classification(i);
+
+            NSLog(@"\t\t[MultiHandednesses][Index] %d", classification.index());
+            NSLog(@"\t\t[MultiHandednesses][Score] %f", classification.score());
+            NSLog(@"\t\t[MultiHandednesses][Label] %s", classification.label().c_str());
         }
     }
 }
