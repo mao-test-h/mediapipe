@@ -341,10 +341,9 @@ static NSString* const kCameraPosition = @"front";
         const auto &classifications = multiHandClassifications[handIndex];
         for (int i = 0; i < classifications.classification_size(); ++i) {
             const auto &classification = classifications.classification(i);
-
             if (classification.label().compare("Left") == 0) {
                 detect += 1;
-                leftIndex = i;
+                leftIndex = handIndex;
             } else if (classification.label().compare("Right") == 0) {
                 detect += 2;
             }
