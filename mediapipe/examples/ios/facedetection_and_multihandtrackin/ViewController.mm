@@ -211,7 +211,7 @@ static NSString* const kCameraPosition = @"front";
 
         NSLog(@"\t[FaceDetect][ScoreSize] %d", detect.score_size());
         for (int i = 0; i < detect.score_size(); ++i) {
-            const auto &score = detec：t.score(i);
+            const auto &score = detect.score(i);
             NSLog(@"\t\t[FaceDetect][Score] %f", score);
         }
     }
