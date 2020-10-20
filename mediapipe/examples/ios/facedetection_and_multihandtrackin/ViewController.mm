@@ -191,7 +191,8 @@ static NSString* const kCameraPosition = @"front";
     NSLog(@"[FaceDetect][TS:%lld] Number of face instances with detections: %lu", packet.Timestamp().Value(), detects.size());
 
     for (int faceIndex = 0; faceIndex < detects.size(); ++faceIndex) {
-        const auto &locationData = detects[faceIndex].location_data();
+        const auto &detect = detects[faceIndex];
+        const auto &locationData = detect.location_data();
         const auto &format = locationData.format();
         const auto &boundingBox = locationData.bounding_box();
         const auto &relativeBoundingBox = locationData.relative_bounding_box();
@@ -206,6 +207,12 @@ static NSString* const kCameraPosition = @"front";
         for (int i = 0; i < keypointSize; ++i) {
             const auto &keypoint = locationData.relative_keypoints(i);
             NSLog(@"\t\t[FaceDetect][Keypoint] (%f, %f, %s, %f)", keypoint.x(), keypoint.y(), keypoint.keypoint_label().c_str(), keypoint.score());
+        }
+
+        NSLog(@"\t[FaceDetect][ScoreSize] %d", detect.score_size());
+        for (int i = 0; i < detect.score_size(); ++i) {
+            const auto &score = detec：t.score(i);
+            NSLog(@"\t\t[FaceDetect][Score] %f", score);
         }
     }
 }
@@ -230,6 +237,8 @@ static NSString* const kCameraPosition = @"front";
     for (int index = 0; index < landmarks.landmark_size(); ++index) {
         const auto &landmark = landmarks.landmark(index);
         NSLog(@"\t\t[FaceLandmark] [%d](%f, %f, %f)", index, landmark.x(), landmark.y(), landmark.z());
+        NSLog(@"\t\t[FaceLandmark] [%d] %f", index, landmark.visibility());
+        NSLog(@"\t\t[FaceLandmark] [%d] %f", index, landmark.presence());
     }
 }
 
@@ -246,6 +255,8 @@ static NSString* const kCameraPosition = @"front";
     for (int index = 0; index < landmarks.landmark_size(); ++index) {
         const auto &landmark = landmarks.landmark(index);
         NSLog(@"\t\t[%@EyeContourLamdmark] [%d](%f, %f, %f)", stream, index, landmark.x(), landmark.y(), landmark.z());
+        NSLog(@"\t\t[%@EyeContourLamdmark] [%d] %f", stream, index, landmark.visibility());
+        NSLog(@"\t\t[%@EyeContourLamdmark] [%d] %f", stream, index, landmark.presence());
     }
 }
 
@@ -262,6 +273,8 @@ static NSString* const kCameraPosition = @"front";
     for (int index = 0; index < landmarks.landmark_size(); ++index) {
         const auto &landmark = landmarks.landmark(index);
         NSLog(@"\t\t[%@IrisLamdmark] [%d](%f, %f, %f)", stream, index, landmark.x(), landmark.y(), landmark.z());
+        NSLog(@"\t\t[%@IrisLamdmark] [%d] %f", stream, index, landmark.visibility());
+        NSLog(@"\t\t[%@IrisLamdmark] [%d] %f", stream, index, landmark.presence());
     }
 }
 
