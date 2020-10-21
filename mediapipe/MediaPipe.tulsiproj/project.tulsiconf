@@ -9,6 +9,7 @@
   "packages" : [
     "",
     "mediapipe",
+    "mediapipe/_development/MediaPipeKit",
     "mediapipe/_development/MultiHandTrackingKit",
     "mediapipe/examples/ios",
     "mediapipe/examples/ios/facedetection_and_multihandtrackin",

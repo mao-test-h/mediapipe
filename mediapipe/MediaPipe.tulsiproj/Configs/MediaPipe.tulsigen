@@ -21,6 +21,7 @@
     "mediapipe/examples/ios/upperbodyposetrackinggpu/BUILD"
   ],
   "buildTargets" : [
+    "//mediapipe/_development/MediaPipeKit:MediaPipeKit",
     "//mediapipe/_development/MultiHandTrackingKit:MultiHandTrackingKit",
     "//mediapipe/examples/ios/facedetection_and_multihandtrackin:FaceDetectionAndMultiHandTrackinApp",
     "//mediapipe/examples/ios/facedetectioncpu:FaceDetectionCpuApp",
@@ -83,6 +84,7 @@
   "sourceFilters" : [
     "mediapipe",
     "mediapipe/_development",
+    "mediapipe/_development/MediaPipeKit",
     "mediapipe/_development/MultiHandTrackingKit",
     "mediapipe/calculators",
     "mediapipe/calculators/core",
