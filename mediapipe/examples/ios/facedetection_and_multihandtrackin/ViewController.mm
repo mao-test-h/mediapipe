@@ -333,21 +333,46 @@ static NSString* const kCameraPosition = @"front";
               didOutputPacket:(const ::mediapipe::Packet &)packet
                    fromStream:(const std::string &)streamName {
 
-    // 0:None, 1:Left, 2:Right, 3:Left & Right
+    // 0:None, 1:Left, 2:Right, 3:Both(Left & Right), 4:Left & Left, 5:Right & Right, 6:Error
     uint8_t detect = 0;
+    int leftCount = 0, rightCount = 0;
     int leftIndex = -1;
+
     const auto &multiHandClassifications = packet.Get<std::vector<::mediapipe::ClassificationList>>();
     for (int handIndex = 0; handIndex < multiHandClassifications.size(); ++handIndex) {
         const auto &classifications = multiHandClassifications[handIndex];
         for (int i = 0; i < classifications.classification_size(); ++i) {
             const auto &classification = classifications.classification(i);
             if (classification.label().compare("Left") == 0) {
-                detect += 1;
+                leftCount += 1;
                 leftIndex = handIndex;
             } else if (classification.label().compare("Right") == 0) {
-                detect += 2;
+                rightCount += 1;
             }
         }
+    }
+
+    if (leftCount == 0 && rightCount == 0) {
+        // 0:None
+        detect = 0;
+    } else if (leftCount == 1 && rightCount == 1) {
+        // 3:Both
+        detect = 3;
+    } else if (leftCount == 1 && rightCount == 0) {
+        // 1:Left
+        detect = 1;
+    } else if (leftCount == 0 && rightCount == 1) {
+        // 2:Right
+        detect = 2;
+    } else if (leftCount == 2 && rightCount == 0) {
+        // Left & Left
+        detect = 4;
+    } else if (leftCount == 0 && rightCount == 2) {
+        // Right & Right
+        detect = 5;
+    } else {
+        // Other (Treat as error.)
+        detect = 6;
     }
 
     Handedness handedness;

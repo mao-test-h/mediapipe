@@ -1,5 +1,6 @@
 #import "MediaPipeKit.h"
 #import "mediapipe/objc/MPPGraph.h"
+#import "mediapipe/objc/MPPCameraInputSource.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/formats/detection.pb.h"
 #include "mediapipe/framework/formats/rect.pb.h"
@@ -34,7 +35,7 @@ static const char* kMultiHandednessesOutputStream = "multi_handednesses";
 static NSString* const kCameraPosition = @"front";
 
 
-@interface MediaPipeFramework () <MPPGraphDelegate>
+@interface MediaPipeFramework () <MPPGraphDelegate, MPPInputSourceDelegate>
 @end
 
 @implementation MediaPipeFramework {
@@ -42,6 +43,12 @@ static NSString* const kCameraPosition = @"front";
     // The MediaPipe graph currently in use. Initialized in viewDidLoad, started in viewWillAppear: and
     // sent video frames on _videoQueue.
     MPPGraph* _mediapipeGraph;
+
+    // Handles camera access via AVCaptureSession library.
+    MPPCameraInputSource* _cameraSource;
+
+    // Process camera frames on this queue.
+    dispatch_queue_t _videoQueue;
 }
 
 - (void)dealloc {
@@ -71,11 +78,56 @@ static NSString* const kCameraPosition = @"front";
     }
 }
 
+- (void)startGraphWithCamera {
+
+    dispatch_queue_attr_t qosAttribute = dispatch_queue_attr_make_with_qos_class(
+            DISPATCH_QUEUE_SERIAL, QOS_CLASS_USER_INTERACTIVE, /*relative_priority=*/0);
+    _videoQueue = dispatch_queue_create(kVideoQueueLabel, qosAttribute);
+
+    _cameraSource = [[MPPCameraInputSource alloc] init];
+    [_cameraSource setDelegate:self queue:_videoQueue];
+    _cameraSource.sessionPreset = AVCaptureSessionPreset640x480;
+
+    // Use front camera.
+    _cameraSource.cameraPosition = AVCaptureDevicePositionFront;
+    // When using the front camera, mirror the input for a more natural look.
+    _cameraSource.videoMirrored = YES;
+
+    // The frame's native format is rotated with respect to the portrait orientation.
+    _cameraSource.orientation = AVCaptureVideoOrientationPortrait;
+
+    [_cameraSource requestCameraAccessWithCompletionHandler:^void(BOOL granted) {
+        if (granted) {
+            [self startGraph];
+            dispatch_async(_videoQueue, ^{
+                [_cameraSource start];
+            });
+        }
+    }];
+}
+
+// MediaPipeFramework.processVideoFrame
 // Must be invoked on self.videoQueue.
 - (void)processVideoFrame:(CVPixelBufferRef)imageBuffer {
     [_mediapipeGraph sendPixelBuffer:imageBuffer
                           intoStream:kInputStream
                           packetType:MPPPacketTypePixelBuffer];
+}
+
+#pragma mark - MPPInputSourceDelegate methods
+
+// MPPInputSourceDelegate.processVideoFrame
+// Must be invoked on self.videoQueue.
+- (void)processVideoFrame:(CVPixelBufferRef)imageBuffer
+                timestamp:(CMTime)timestamp
+               fromSource:(MPPInputSource*)source {
+
+    if (source != _cameraSource) {
+        NSLog(@"Unknown source: %@", source);
+        return;
+    }
+
+    [self processVideoFrame:imageBuffer];
 }
 
 #pragma mark - MediaPipe graph methods
@@ -330,21 +382,46 @@ static NSString* const kCameraPosition = @"front";
               didOutputPacket:(const ::mediapipe::Packet &)packet
                    fromStream:(const std::string &)streamName {
 
-    // 0:None, 1:Left, 2:Right, 3:Left & Right
+    // 0:None, 1:Left, 2:Right, 3:Both(Left & Right), 4:Left & Left, 5:Right & Right, 6:Error
     uint8_t detect = 0;
+    int leftCount = 0, rightCount = 0;
     int leftIndex = -1;
+
     const auto &multiHandClassifications = packet.Get<std::vector<::mediapipe::ClassificationList>>();
     for (int handIndex = 0; handIndex < multiHandClassifications.size(); ++handIndex) {
         const auto &classifications = multiHandClassifications[handIndex];
         for (int i = 0; i < classifications.classification_size(); ++i) {
             const auto &classification = classifications.classification(i);
             if (classification.label().compare("Left") == 0) {
-                detect += 1;
+                leftCount += 1;
                 leftIndex = handIndex;
             } else if (classification.label().compare("Right") == 0) {
-                detect += 2;
+                rightCount += 1;
             }
         }
+    }
+
+    if (leftCount == 0 && rightCount == 0) {
+        // 0:None
+        detect = 0;
+    } else if (leftCount == 1 && rightCount == 1) {
+        // 3:Both
+        detect = 3;
+    } else if (leftCount == 1 && rightCount == 0) {
+        // 1:Left
+        detect = 1;
+    } else if (leftCount == 0 && rightCount == 1) {
+        // 2:Right
+        detect = 2;
+    } else if (leftCount == 2 && rightCount == 0) {
+        // Left & Left
+        detect = 4;
+    } else if (leftCount == 0 && rightCount == 2) {
+        // Right & Right
+        detect = 5;
+    } else {
+        // Other (Treat as error.)
+        detect = 6;
     }
 
     Handedness handedness;

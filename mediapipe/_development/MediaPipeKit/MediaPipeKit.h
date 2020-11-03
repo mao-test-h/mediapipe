@@ -40,7 +40,7 @@ typedef struct NormalizedRect {
 } NormalizedRect;
 
 typedef struct Handedness {
-    // 0:None, 1:Left, 2:Right, 3:Left & Right
+    // 0:None, 1:Left, 2:Right, 3:Both(Left & Right), 4:Left & Left, 5:Right & Right, 6:Error
     uint8_t detect;
     // Index on the left hand side in two-handed mode. (If both hands are undetected, it is -1.)
     int left_index;
@@ -113,6 +113,8 @@ typedef struct Detection {
 - (instancetype)init;
 
 - (void)startGraph;
+
+- (void)startGraphWithCamera;
 
 - (void)processVideoFrame:(CVPixelBufferRef)imageBuffer;
 
