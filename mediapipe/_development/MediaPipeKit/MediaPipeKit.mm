@@ -194,48 +194,51 @@ static NSString* const kCameraPosition = @"front";
         return;
     }
 
-    [self sendGraph:graph didOutputPacket:packet fromStream:streamName];
+    int64_t ts = packet.Timestamp().Value();
+    [self sendGraph:graph didOutputPacket:packet fromStream:streamName timeStamp:ts];
 }
 
 #pragma mark - mediapipeGraph send methods
 
 - (void)sendGraph:(MPPGraph*)graph
   didOutputPacket:(const ::mediapipe::Packet &)packet
-       fromStream:(const std::string &)streamName {
+       fromStream:(const std::string &)streamName
+        timeStamp:(int64_t)ts {
 
     // Face
     if (streamName == kFaceDetectOutputStream) {
-        [self sendFaceDetect:graph didOutputPacket:packet fromStream:streamName];
+        [self sendFaceDetect:graph didOutputPacket:packet fromStream:streamName timeStamp:ts];
     } else if (streamName == kFaceLandmarksOutputStream) {
-        [self sendFace3dLandmarks:graph didOutputPacket:packet fromStream:streamName];
+        [self sendFace3dLandmarks:graph didOutputPacket:packet fromStream:streamName timeStamp:ts];
     } else if (streamName == kFaceRectOutputStream) {
-        [self sendFaceRect:graph didOutputPacket:packet fromStream:streamName];
+        [self sendFaceRect:graph didOutputPacket:packet fromStream:streamName timeStamp:ts];
 
         // Left Eye
     } else if (streamName == kLeftEyeContourLandmarksOutputStream) {
-        [self sendEyeContour3dLandmarksOutputStream:graph didOutputPacket:packet fromStream:streamName];
+        [self sendEyeContour3dLandmarksOutputStream:graph didOutputPacket:packet fromStream:streamName timeStamp:ts];
     } else if (streamName == kLeftIrisLandmarksOutputStream) {
-        [self sendIris3dLandmarks:graph didOutputPacket:packet fromStream:streamName];
+        [self sendIris3dLandmarks:graph didOutputPacket:packet fromStream:streamName timeStamp:ts];
 
         // Right Eye
     } else if (streamName == kRightEyeContourLandmarksOutputStream) {
-        [self sendEyeContour3dLandmarksOutputStream:graph didOutputPacket:packet fromStream:streamName];
+        [self sendEyeContour3dLandmarksOutputStream:graph didOutputPacket:packet fromStream:streamName timeStamp:ts];
     } else if (streamName == kRightIrisLandmarksOutputStream) {
-        [self sendIris3dLandmarks:graph didOutputPacket:packet fromStream:streamName];
+        [self sendIris3dLandmarks:graph didOutputPacket:packet fromStream:streamName timeStamp:ts];
 
         // Multi-Hands
     } else if (streamName == kMultiHand3dLandmarksOutputStream) {
-        [self sendMultiHand3dLandmarks:graph didOutputPacket:packet fromStream:streamName];
+        [self sendMultiHand3dLandmarks:graph didOutputPacket:packet fromStream:streamName timeStamp:ts];
     } else if (streamName == kMultiHandRectsOutputStream) {
-        [self sendMultiHandRects:graph didOutputPacket:packet fromStream:streamName];
+        [self sendMultiHandRects:graph didOutputPacket:packet fromStream:streamName timeStamp:ts];
     } else if (streamName == kMultiHandednessesOutputStream) {
-        [self sendMultiHandednesses:graph didOutputPacket:packet fromStream:streamName];
+        [self sendMultiHandednesses:graph didOutputPacket:packet fromStream:streamName timeStamp:ts];
     }
 }
 
 - (void)sendFaceDetect:(MPPGraph*)graph
        didOutputPacket:(const ::mediapipe::Packet &)packet
-            fromStream:(const std::string &)streamName {
+            fromStream:(const std::string &)streamName
+             timeStamp:(int64_t)ts {
 
     float detectionScore = 0;
     const auto &detects = packet.Get<std::vector<::mediapipe::Detection>>();
@@ -251,12 +254,14 @@ static NSString* const kCameraPosition = @"front";
     detection.score = detectionScore;
     NSValue* result = [NSValue value:&detection withObjCType:@encode(Detection)];
     [_delegate receiveFaceDetect:self
-              didOutputDetection:result];
+              didOutputDetection:result
+                       timeStamp:ts];
 }
 
 - (void)sendFace3dLandmarks:(MPPGraph*)graph
             didOutputPacket:(const ::mediapipe::Packet &)packet
-                 fromStream:(const std::string &)streamName {
+                 fromStream:(const std::string &)streamName
+                  timeStamp:(int64_t)ts {
 
     NSMutableArray* resultLandmarks = [NSMutableArray array];
     const auto &landmarks = packet.Get<::mediapipe::NormalizedLandmarkList>();
@@ -270,12 +275,14 @@ static NSString* const kCameraPosition = @"front";
 
     [_delegate receiveFace3dLandmarks:self
                    didOutputLandmarks:resultLandmarks
-                    withLandmarkCount:landmarks.landmark_size()];
+                    withLandmarkCount:landmarks.landmark_size()
+                            timeStamp:ts];
 }
 
 - (void)sendFaceRect:(MPPGraph*)graph
      didOutputPacket:(const ::mediapipe::Packet &)packet
-          fromStream:(const std::string &)streamName {
+          fromStream:(const std::string &)streamName
+           timeStamp:(int64_t)ts {
 
     const auto &rect = packet.Get<mediapipe::NormalizedRect>();
     NormalizedRect nRect;
@@ -287,12 +294,14 @@ static NSString* const kCameraPosition = @"front";
     nRect.rect_id = rect.rect_id();
     NSValue* result = [NSValue value:&nRect withObjCType:@encode(NormalizedRect)];
     [_delegate receiveFaceRect:self
-                 didOutputRect:result];
+                 didOutputRect:result
+                     timeStamp:ts];
 }
 
 - (void)sendEyeContour3dLandmarksOutputStream:(MPPGraph*)graph
                               didOutputPacket:(const ::mediapipe::Packet &)packet
-                                   fromStream:(const std::string &)streamName {
+                                   fromStream:(const std::string &)streamName
+                                    timeStamp:(int64_t)ts {
 
     NSMutableArray* resultLandmarks = [NSMutableArray array];
     const auto &landmarks = packet.Get<::mediapipe::NormalizedLandmarkList>();
@@ -307,12 +316,14 @@ static NSString* const kCameraPosition = @"front";
     [_delegate receiveEyeContour3dLandmarks:self
                          didOutputLandmarks:resultLandmarks
                           withLandmarkCount:landmarks.landmark_size()
-                              isLeftOrRight:(streamName == kLeftEyeContourLandmarksOutputStream)];
+                              isLeftOrRight:(streamName == kLeftEyeContourLandmarksOutputStream)
+                                  timeStamp:ts];
 }
 
 - (void)sendIris3dLandmarks:(MPPGraph*)graph
             didOutputPacket:(const ::mediapipe::Packet &)packet
-                 fromStream:(const std::string &)streamName {
+                 fromStream:(const std::string &)streamName
+                  timeStamp:(int64_t)ts {
 
     NSMutableArray* resultLandmarks = [NSMutableArray array];
     const auto &landmarks = packet.Get<::mediapipe::NormalizedLandmarkList>();
@@ -327,12 +338,14 @@ static NSString* const kCameraPosition = @"front";
     [_delegate receiveIris3dLandmarks:self
                    didOutputLandmarks:resultLandmarks
                     withLandmarkCount:landmarks.landmark_size()
-                        isLeftOrRight:(streamName == kLeftIrisLandmarksOutputStream)];
+                        isLeftOrRight:(streamName == kLeftIrisLandmarksOutputStream)
+                            timeStamp:ts];
 }
 
 - (void)sendMultiHand3dLandmarks:(MPPGraph*)graph
                  didOutputPacket:(const ::mediapipe::Packet &)packet
-                      fromStream:(const std::string &)streamName {
+                      fromStream:(const std::string &)streamName
+                       timeStamp:(int64_t)ts {
 
     NSMutableArray* resultLandmarks = [NSMutableArray array];
     const auto &multiHandLandmarks = packet.Get<std::vector<::mediapipe::NormalizedLandmarkList>>();
@@ -352,12 +365,14 @@ static NSString* const kCameraPosition = @"front";
     [_delegate receiveMultiHand3dLandmarks:self
                         didOutputLandmarks:resultLandmarks
                          withLandmarkCount:kLandmarkCount
-                             withHandCount:(int) multiHandLandmarks.size()];
+                             withHandCount:(int) multiHandLandmarks.size()
+                                 timeStamp:ts];
 }
 
 - (void)sendMultiHandRects:(MPPGraph*)graph
            didOutputPacket:(const ::mediapipe::Packet &)packet
-                fromStream:(const std::string &)streamName {
+                fromStream:(const std::string &)streamName
+                 timeStamp:(int64_t)ts {
 
     NSMutableArray* resultRects = [NSMutableArray array];
     const auto &multiHandRects = packet.Get<std::vector<::mediapipe::NormalizedRect>>();
@@ -375,12 +390,14 @@ static NSString* const kCameraPosition = @"front";
 
     [_delegate receiveMultiHandRects:self
                       didOutputRects:resultRects
-                       withHandCount:(int) multiHandRects.size()];
+                       withHandCount:(int) multiHandRects.size()
+                           timeStamp:ts];
 }
 
 - (void)sendMultiHandednesses:(MPPGraph*)graph
               didOutputPacket:(const ::mediapipe::Packet &)packet
-                   fromStream:(const std::string &)streamName {
+                   fromStream:(const std::string &)streamName
+                    timeStamp:(int64_t)ts {
 
     // 0:None, 1:Left, 2:Right, 3:Both(Left & Right), 4:Left & Left, 5:Right & Right, 6:Error
     uint8_t detect = 0;
@@ -429,7 +446,8 @@ static NSString* const kCameraPosition = @"front";
     handedness.left_index = leftIndex;
     NSValue* result = [NSValue value:&handedness withObjCType:@encode(Handedness)];
     [_delegate receiveMultiHandedness:self
-                  didOutputHandedness:result];
+                  didOutputHandedness:result
+                            timeStamp:ts];
 }
 
 @end

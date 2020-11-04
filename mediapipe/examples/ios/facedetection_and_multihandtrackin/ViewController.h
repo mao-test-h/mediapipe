@@ -54,43 +54,51 @@ typedef struct Detection {
 
 // NOTE: NSValue<Detection>
 - (void)receiveFaceDetect:(MediaPipeFramework*)framework
-       didOutputDetection:(NSValue*)detection;
+       didOutputDetection:(NSValue*)detection
+                timeStamp:(int64_t)ts;
 
 // NOTE: NSArray<NormalizedLandmark>
 - (void)receiveFace3dLandmarks:(MediaPipeFramework*)framework
             didOutputLandmarks:(NSArray*)landmarks
-             withLandmarkCount:(int)landmarkCount;
+             withLandmarkCount:(int)landmarkCount
+                     timeStamp:(int64_t)ts;
 
 // NOTE: NSValue<NormalizedRect>
 - (void)receiveFaceRect:(MediaPipeFramework*)framework
-          didOutputRect:(NSValue*)rect;
+          didOutputRect:(NSValue*)rect
+              timeStamp:(int64_t)ts;
 
 // NOTE: NSArray<NormalizedLandmark>
 - (void)receiveEyeContour3dLandmarks:(MediaPipeFramework*)framework
                   didOutputLandmarks:(NSArray*)landmarks
                    withLandmarkCount:(int)landmarkCount
-                       isLeftOrRight:(bool)isLeft;
+                       isLeftOrRight:(bool)isLeft
+                           timeStamp:(int64_t)ts;
 
 // NOTE: NSArray<NormalizedLandmark>
 - (void)receiveIris3dLandmarks:(MediaPipeFramework*)framework
             didOutputLandmarks:(NSArray*)landmarks
              withLandmarkCount:(int)landmarkCount
-                 isLeftOrRight:(bool)isLeft;
+                 isLeftOrRight:(bool)isLeft
+                     timeStamp:(int64_t)ts;
 
 // NOTE: NSArray<NormalizedLandmark>
 - (void)receiveMultiHand3dLandmarks:(MediaPipeFramework*)framework
                  didOutputLandmarks:(NSArray*)landmarks
                   withLandmarkCount:(int)landmarkCount
-                      withHandCount:(int)handCount;
+                      withHandCount:(int)handCount
+                          timeStamp:(int64_t)ts;
 
 // NOTE: NSArray<NormalizedRect>
 - (void)receiveMultiHandRects:(MediaPipeFramework*)framework
                didOutputRects:(NSArray*)rects
-                withHandCount:(int)handCount;
+                withHandCount:(int)handCount
+                    timeStamp:(int64_t)ts;
 
 // NOTE: NSValue<Handedness>
 - (void)receiveMultiHandedness:(MediaPipeFramework*)framework
-           didOutputHandedness:(NSValue*)handedness;
+           didOutputHandedness:(NSValue*)handedness
+                     timeStamp:(int64_t)ts;
 
 @optional
 
