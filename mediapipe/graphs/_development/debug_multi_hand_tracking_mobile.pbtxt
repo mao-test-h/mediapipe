@@ -2,27 +2,13 @@
 
 # Images coming into and out of the graph.
 input_stream: "input_video"
+output_stream: "output_video"
 
-# Face Tracking Output.
-output_stream: "DETECTIONS:0:face_detections"
-output_stream: "NORM_RECT:face_rect"
-output_stream: "face_landmarks_with_iris"
-
-# Iris Tracking Output.
-output_stream: "EYE_LANDMARKS_LEFT:left_eye_contour_landmarks"
-output_stream: "EYE_LANDMARKS_RIGHT:right_eye_contour_landmarks"
-output_stream: "IRIS_LANDMARKS_LEFT:left_iris_landmarks"
-output_stream: "IRIS_LANDMARKS_RIGHT:right_iris_landmarks"
-output_stream: "LEFT_EYE_RECT:left_eye_rect_from_landmarks"
-output_stream: "RIGHT_EYE_RECT:right_eye_rect_from_landmarks"
-
-# MultiHand Tracking Output.
-output_stream: "LANDMARKS:multi_hand_landmarks"
+# Mmulti hand handedness with multi-hand tracking.(ClassificationList)
 output_stream: "HANDEDNESSES:multi_handednesses"
-output_stream: "DETECTIONS:1:multi_palm_detections"
-output_stream: "NORM_RECTS:0:multi_palm_rects"
-output_stream: "NORM_RECTS:1:multi_hand_rects"
 
+# Face landmarks with iris. (NormalizedLandmarkList)
+output_stream: "face_landmarks_with_iris"
 
 # Throttles the images flowing downstream for flow control. It passes through
 # the very first incoming image unaltered, and waits for downstream nodes
@@ -134,6 +120,7 @@ node {
   calculator: "IrisTrackingSubgraph"
   input_stream: "IMAGE:throttled_input_video"
   output_stream: "IRIS_LANDMARKS:face_landmarks_with_iris"
+  output_stream: "FACE_LANDMARKS:updated_face_landmarks"
   output_stream: "EYE_LANDMARKS_LEFT:left_eye_contour_landmarks"
   output_stream: "EYE_LANDMARKS_RIGHT:right_eye_contour_landmarks"
   output_stream: "IRIS_LANDMARKS_LEFT:left_iris_landmarks"
@@ -142,4 +129,33 @@ node {
   output_stream: "LEFT_EYE_RECT:left_eye_rect_from_landmarks"
   output_stream: "RIGHT_EYE_RECT:right_eye_rect_from_landmarks"
   output_stream: "DETECTIONS:face_detections"
+}
+
+# Subgraph that renders annotations and overlays them on top of the input
+# images (see "//mediapipe/graphs/_development/subgraphs/iris_and_depth_renderer_gpu.pbtxt")
+node {
+  calculator: "IrisAndDepthRendererGpu"
+  input_stream: "IMAGE:throttled_input_video"
+  input_stream: "FACE_LANDMARKS:updated_face_landmarks"
+  input_stream: "EYE_LANDMARKS_LEFT:left_eye_contour_landmarks"
+  input_stream: "EYE_LANDMARKS_RIGHT:right_eye_contour_landmarks"
+  input_stream: "IRIS_LANDMARKS_LEFT:left_iris_landmarks"
+  input_stream: "IRIS_LANDMARKS_RIGHT:right_iris_landmarks"
+  input_stream: "NORM_RECT:face_rect"
+  input_stream: "LEFT_EYE_RECT:left_eye_rect_from_landmarks"
+  input_stream: "RIGHT_EYE_RECT:right_eye_rect_from_landmarks"
+  input_stream: "DETECTIONS:face_detections"
+  output_stream: "IMAGE:iris_output_video"
+}
+
+# Subgraph that renders annotations and overlays them on top of the input
+# images (see "//mediapipe/graphs/_development/subgraphs/multi_hand_renderer_gpu.pbtxt")
+node {
+  calculator: "MultiHandRendererSubgraph"
+  input_stream: "IMAGE:iris_output_video"
+  input_stream: "DETECTIONS:0:multi_palm_detections"
+  input_stream: "LANDMARKS:multi_hand_landmarks"
+  input_stream: "NORM_RECTS:0:multi_palm_rects"
+  input_stream: "NORM_RECTS:1:multi_hand_rects"
+  output_stream: "IMAGE:output_video"
 }

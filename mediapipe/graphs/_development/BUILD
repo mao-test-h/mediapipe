@@ -33,9 +33,9 @@ cc_library(
         "//mediapipe/calculators/core:previous_loopback_calculator",
         "//mediapipe/calculators/util:association_norm_rect_calculator",
         "//mediapipe/calculators/util:collection_has_min_size_calculator",
+        "//mediapipe/calculators/core:concatenate_normalized_landmark_list_calculator",
         "//mediapipe/graphs/hand_tracking/subgraphs:multi_hand_detection_gpu",
         "//mediapipe/graphs/hand_tracking/subgraphs:multi_hand_landmark_gpu",
-        "//mediapipe/graphs/_development/subgraphs:multi_hand_renderer_gpu",
         "//mediapipe/graphs/_development/subgraphs:iris_tracking_gpu_binary_graph",
     ],
 )
@@ -46,3 +46,26 @@ mediapipe_binary_graph(
     output_name = "multi_hand_tracking_mobile_gpu.binarypb",
     deps = [":multi_hand_mobile_calculators"],
 )
+
+cc_library(
+    name = "debug_multi_hand_mobile_calculators",
+    deps = [
+        "//mediapipe/calculators/core:flow_limiter_calculator",
+        "//mediapipe/calculators/core:gate_calculator",
+        "//mediapipe/calculators/core:previous_loopback_calculator",
+        "//mediapipe/calculators/util:association_norm_rect_calculator",
+        "//mediapipe/calculators/util:collection_has_min_size_calculator",
+        "//mediapipe/graphs/hand_tracking/subgraphs:multi_hand_detection_gpu",
+        "//mediapipe/graphs/hand_tracking/subgraphs:multi_hand_landmark_gpu",
+        "//mediapipe/graphs/_development/subgraphs:multi_hand_renderer_gpu",
+        "//mediapipe/graphs/_development/subgraphs:iris_tracking_gpu_binary_graph",
+    ],
+)
+
+mediapipe_binary_graph(
+    name = "debug_multi_hand_tracking_mobile_gpu_binary_graph",
+    graph = "debug_multi_hand_tracking_mobile.pbtxt",
+    output_name = "debug_multi_hand_tracking_mobile_gpu.binarypb",
+    deps = [":debug_multi_hand_mobile_calculators"],
+)
+

@@ -65,7 +65,8 @@ objc_library(
     data = [
         "Base.lproj/LaunchScreen.storyboard",
         "Base.lproj/Main.storyboard",
-        "//mediapipe/graphs/_development:multi_hand_tracking_mobile_gpu_binary_graph",
+        #"//mediapipe/graphs/_development:multi_hand_tracking_mobile_gpu_binary_graph",
+        "//mediapipe/graphs/_development:debug_multi_hand_tracking_mobile_gpu_binary_graph",
         "//mediapipe/models:hand_landmark.tflite",
         "//mediapipe/models:handedness.txt",
         "//mediapipe/models:palm_detection.tflite",
@@ -89,7 +90,8 @@ objc_library(
         "//mediapipe:ios_i386": [],
         "//mediapipe:ios_x86_64": [],
         "//conditions:default": [
-            "//mediapipe/graphs/_development:multi_hand_mobile_calculators",
+            #"//mediapipe/graphs/_development:multi_hand_mobile_calculators",
+            "//mediapipe/graphs/_development:debug_multi_hand_mobile_calculators",
             "//mediapipe/framework/formats:detection_cc_proto",
             "//mediapipe/framework/formats:landmark_cc_proto",
             "//mediapipe/framework/formats:rect_cc_proto",

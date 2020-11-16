@@ -1,3 +1,5 @@
+#define ENABLE_DEBUG
+
 #import "ViewController.h"
 #import "mediapipe/objc/MPPGraph.h"
 #import "mediapipe/objc/MPPCameraInputSource.h"
@@ -9,11 +11,18 @@
 
 static const char* kVideoQueueLabel = "com.google.mediapipe.example.videoQueue";
 
+#ifdef ENABLE_DEBUG
+static NSString* const kGraphName = @"debug_multi_hand_tracking_mobile_gpu";
+#else
 static NSString* const kGraphName = @"multi_hand_tracking_mobile_gpu";
+#endif
 
 // Images coming into and out of the graph.
 static const char* kInputStream = "input_video";
+
+#ifdef ENABLE_DEBUG
 static const char* kOutputStream = "output_video";
+#endif
 
 // Face
 static const char* kFaceDetectOutputStream = "face_detections";
@@ -104,7 +113,10 @@ static NSString* const kCameraPosition = @"front";
 
     // Create MediaPipe graph with mediapipe::CalculatorGraphConfig proto object.
     MPPGraph* newGraph = [[MPPGraph alloc] initWithGraphConfig:config];
+
+#ifdef ENABLE_DEBUG
     [newGraph addFrameOutputStream:kOutputStream outputPacketType:MPPPacketTypePixelBuffer];
+#endif
 
     [newGraph addFrameOutputStream:kFaceDetectOutputStream outputPacketType:MPPPacketTypeRaw];
     [newGraph addFrameOutputStream:kFaceRectOutputStream outputPacketType:MPPPacketTypeRaw];
@@ -125,6 +137,8 @@ static NSString* const kCameraPosition = @"front";
 
 #pragma mark - MPPGraphDelegate methods
 
+#ifdef ENABLE_DEBUG
+
 // Receives CVPixelBufferRef from the MediaPipe graph. Invoked on a MediaPipe worker thread.
 - (void)mediapipeGraph:(MPPGraph*)graph
   didOutputPixelBuffer:(CVPixelBufferRef)pixelBuffer
@@ -133,6 +147,8 @@ static NSString* const kCameraPosition = @"front";
     if (streamName != kOutputStream) {return;}
     [_delegate receivePixelBufferRef:pixelBuffer];
 }
+
+#endif
 
 // Receives a raw packet from the MediaPipe graph. Invoked on a MediaPipe worker thread.
 - (void)mediapipeGraph:(MPPGraph*)graph
