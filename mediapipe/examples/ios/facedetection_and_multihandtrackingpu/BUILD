@@ -22,8 +22,8 @@ licenses(["notice"])
 MIN_IOS_VERSION = "10.0"
 
 alias(
-    name = "FaceDetectionAndMultiHandTrackin",
-    actual = "FaceDetectionAndMultiHandTrackinApp",
+    name = "FaceDetectionAndMultiHandTrackingGpu",
+    actual = "FaceDetectionAndMultiHandTrackingGpuApp",
 )
 
 filegroup(
@@ -33,9 +33,9 @@ filegroup(
 )
 
 ios_application(
-    name = "FaceDetectionAndMultiHandTrackinApp",
+    name = "FaceDetectionAndMultiHandTrackingGpuApp",
     app_icons = ["//mediapipe/examples/ios/common:AppIcon"],
-    bundle_id = "jp.mao-personal.wildcard.FaceDetectionAndMultiHandTrackin",
+    bundle_id = "jp.mao-personal.wildcard.FaceDetectionAndMultiHandTrackingGpu",
     families = [
         "iphone",
         "ipad",
@@ -44,13 +44,13 @@ ios_application(
     minimum_os_version = MIN_IOS_VERSION,
     provisioning_profile = "//mediapipe:provisioning_profile.mobileprovision",
     deps = [
-        ":FaceDetectionAndMultiHandTrackinAppLibrary",
+        ":FaceDetectionAndMultiHandTrackingGpuAppLibrary",
         "@ios_opencv//:OpencvFramework",
     ],
 )
 
 objc_library(
-    name = "FaceDetectionAndMultiHandTrackinAppLibrary",
+    name = "FaceDetectionAndMultiHandTrackingGpuAppLibrary",
     srcs = [
         "AppDelegate.m",
         "SceneDelegate.m",
