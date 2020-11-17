@@ -69,3 +69,25 @@ mediapipe_binary_graph(
     deps = [":debug_multi_hand_mobile_calculators"],
 )
 
+cc_library(
+    name = "multi_hand_mobile_cpu_calculators",
+    deps = [
+        "//mediapipe/calculators/core:flow_limiter_calculator",
+        "//mediapipe/calculators/core:gate_calculator",
+        "//mediapipe/calculators/core:previous_loopback_calculator",
+        "//mediapipe/calculators/util:association_norm_rect_calculator",
+        "//mediapipe/calculators/util:collection_has_min_size_calculator",
+        "//mediapipe/graphs/hand_tracking/subgraphs:multi_hand_detection_cpu",
+        "//mediapipe/graphs/hand_tracking/subgraphs:multi_hand_landmark_cpu",
+        "//mediapipe/graphs/hand_tracking/subgraphs:multi_hand_renderer_cpu",
+        "//mediapipe/gpu:gpu_buffer_to_image_frame_calculator",
+        "//mediapipe/gpu:image_frame_to_gpu_buffer_calculator",
+    ],
+)
+
+mediapipe_binary_graph(
+    name = "multi_hand_tracking_mobile_cpu_binary_graph",
+    graph = "multi_hand_tracking_mobile_cpu.pbtxt",
+    output_name = "multi_hand_tracking_mobile_cpu.binarypb",
+    deps = [":multi_hand_mobile_cpu_calculators"],
+)
